@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Emma's Grammar Quest</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fff0f6;
+      margin: 0;
+      padding: 0;
+    }
+    #score-progress {
+      display: flex;
+      justify-content: space-between;
+      background: #ffc0cb;
+      padding: 10px 20px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #5a2a27;
+    }
+    #emma-pic {
+      position: fixed;
+      top: 70px;
+      left: 20px;
+      width: 160px;
+      border-radius: 15px;
+      background: rgba(255, 192, 203, 0.9);
+      padding: 8px;
+      box-shadow: 0 0 15px #ff8fb3;
+      z-index: 1000;
+    }
+    #emma-pic img {
+      width: 100%;
+      border-radius: 15px;
+    }
+    .scene-container {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      min-height: 100vh;
+      background-size: cover;
+      background-position: center;
+      color: #442a28;
+      position: relative;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out;
+    }
+    .scene-container.active {
+      display: flex;
+      opacity: 1;
+    }
+    .characters {
+      position: absolute;
+      top: 80px;
+      right: 20px;
+      z-index: 10;
+    }
+    .characters img {
+      max-width: 180px;
+      border-radius: 10px;
+      background: rgba(255, 192, 203, 0.8);
+      padding: 8px;
+      margin-bottom: 15px;
+    }
+    .robot-corner {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 120px;
+      border-radius: 10px;
+      background: rgba(255, 192, 203, 0.8);
+      padding: 5px;
+      box-shadow: 0 0 10px #ff69b4;
+      z-index: 100;
+    }
+    .robot-corner img {
+      width: 100%;
+      border-radius: 8px;
+    }
+    .speech {
+      background: #fff0f6;
+      border-radius: 10px;
+      padding: 15px 20px;
+      margin-bottom: 15px;
+      max-width: 600px;
+      font-size: 18px;
+      box-shadow: 0 0 5px #ffb6c1;
+    }
+    .question {
+      background: #ffe4e1;
+      border-radius: 10px;
+      padding: 15px 20px;
+      max-width: 600px;
+      margin-bottom: 15px;
+      box-shadow: 0 0 5px #ffb6c1;
+    }
+    .question h3 {
+      margin-top: 0;
+    }
+    .options button {
+      display: block;
+      width: 100%;
+      margin: 7px 0;
+      padding: 10px;
+      font-size: 16px;
+      border: 2px solid #ff69b4;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.3s;
+    }
+    .options button:hover:not(:disabled) {
+      background-color: #ffccda;
+      transform: scale(1.03);
+    }
+    .options button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    .options button.correct {
+      background-color: #98fb98;
+      border-color: #228b22;
+      color: #114411;
+      cursor: default;
+    }
+    .options button.incorrect {
+      background-color: #ff9999;
+      border-color: #cc0000;
+      color: #660000;
+      cursor: pointer;
+    }
+    .next-btn {
+      padding: 12px 24px;
+      font-size: 18px;
+      background-color: #ff69b4;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      display: none;
+      margin-top: 10px;
+      box-shadow: 0 0 10px #ff69b4;
+      animation: pulse 1.5s infinite;
+    }
+    .next-btn:hover {
+      background-color: #ff1493;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    .start-btn {
+      padding: 18px 36px;
+      font-size: 24px;
+      background: linear-gradient(to right, #ff69b4, #ffd700);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 0 20px #ffc0cb;
+      transition: transform 0.2s;
+      margin-top: 20px;
+    }
+    .start-btn:hover {
+      transform: scale(1.05);
+      background: linear-gradient(to right, #ff1493, #ffb700);
+    }
+    @media (max-width: 600px) {
+      #emma-pic {
+        width: 100px;
+        top: 60px;
+        left: 10px;
+      }
+      .robot-corner {
+        width: 80px;
+        top: 15px;
+        right: 10px;
+      }
+      .characters {
+        top: 60px;
+        right: 10px;
+      }
+      .characters img {
+        max-width: 100px;
+      }
+      .speech, .question {
+        max-width: 90%;
+        font-size: 16px;
+        padding: 10px;
+      }
+      .start-btn, .next-btn {
+        font-size: 16px;
+        padding: 10px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div id="score-progress">
+  <div>Score: <span id="score">0</span></div>
+  <div>Scene: <span id="current-scene">0</span>/5</div>
+</div>
+
+<!-- Audio for sound effects -->
+<!-- Correct sound: https://freesound.org/people/tim.kahn/sounds/171104/ (CC0) -->
+<!-- Incorrect sound: https://freesound.org/people/tim.kahn/sounds/171105/ (CC0) -->
+<audio id="correct-sound" src="https://freesound.org/data/previews/171/171104_2437358-lq.mp3"></audio>
+<audio id="incorrect-sound" src="https://freesound.org/data/previews/171/171105_2437358-lq.mp3"></audio>
+
+<!-- Welcome Scene with Instructions -->
+<div id="scene0" class="scene-container active" style="background-color: #fff0f6;">
+  <div class="speech">
+    <h2>Mission: Save the Pets</h2>
+    <p>Emma came home from school and discovered... all her pets are missing!</p>
+    <p>Strange things are happening around the house — someone is singing in the bathroom, cooking in the kitchen, and digging in the garden.</p>
+    <p>Help Emma find out what's going on and rescue her beloved pets!</p>
+    <p>To succeed, answer grammar questions using <strong>Present Simple</strong>, <strong>Present Continuous</strong>, and <strong>Why/Because</strong> sentences.</p>
+    <p>Each correct answer earns you <strong>10 points</strong>. Solve the final mission to win the key and find the pets!</p>
+    <button class="start-btn" onclick="goToScene(1)">START</button>
+  </div>
+</div>
+
+<!-- Emma's picture on the left -->
+<div id="emma-pic">
+  <img src="https://file.aiquickdraw.com/imgcompressed/img/compressed_33d1fb6ee511b41d209a3a2f51a51665.webp" alt="Emma" />
+</div>
+
+<!-- Scene 1: Bathroom -->
+<div id="scene1" class="scene-container" style="background-image: url('https://img.freepik.com/free-vector/bathroom-interior-vintage-french-provence-style-illustration_33099-799.jpg?semt=ais_hybrid&w=740');">
+  <div class="characters">
+    <img src="https://file.aiquickdraw.com/imgcompressed/img/compressed_a3cce68fe175054e1716de8387156ace.webp" alt="Tom" />
+  </div>
+  <div class="speech">Tom is in the bathroom. What is he doing?</div>
+  <div class="question">
+    <h3>What is he doing?</h3>
+    <div class="options">
+      <button onclick="handleAnswer(this, false, 'scene1')">He is brushing his dog.</button>
+      <button onclick="handleAnswer(this, true, 'scene1')">He is brushing his teeth.</button>
+      <button onclick="handleAnswer(this, false, 'scene1')">He is brushing his hair.</button>
+    </div>
+  </div>
+  <div class="question">
+    <h3>Why is he brushing his teeth?</h3>
+    <div class="options">
+      <button onclick="handleAnswer(this, true, 'scene1')">Because he's going to the dentist.</button>
+      <button onclick="handleAnswer(this, false, 'scene1')">Because he is sleepy.</button>
+      <button onclick="handleAnswer(this, false, 'scene1')">Because he never eats sweets.</button>
+    </div>
+  </div>
+  <button class="next-btn" id="next-scene1" onclick="goToScene(2)">Next</button>
+</div>
+
+<!-- Scene 2: Kitchen -->
+<div id="scene2" class="scene-container" style="background-image: url('https://cdna.artstation.com/p/marketplace/presentation_assets/002/890/548/large/file.jpg?1690488146');">
+  <div class="characters">
+    <img src="https://file.aiquickdraw.com/imgcompressed/img/compressed_c74a8277cd9735e33a785a00d2fa44e6.webp" alt="Mom" />
+  </div>
+  <div class="speech">Mom is in the kitchen. What is she doing?</div>
+  <div class="question">
+    <h3>What is she doing?</h3>
+    <div class="options">
+      <button onclick="handleAnswer(this, false, 'scene2')">She is cook dinner.</button>
+      <button onclick="handleAnswer(this, true, 'scene2')">She is baking a birthday cake.</button>
+      <button onclick="handleAnswer(this, false, 'scene2')">She bakes a cake every day.</button>
+    </div>
+  </div>
+  <div class="question">
+    <h3>Why is she baking a cake?</h3>
+    <div class="options">
+      <button onclick="handleAnswer(this, true, 'scene2')">Because today is Dad's birthday.</button>
+      <button onclick="handleAnswer(this, false, 'scene2')">Because she loves cakes.</button>
+      <button onclick="handleAnswer(this, false, 'scene2')">Because she never cooks.</button>
+    </div>
+  </div>
+  <button class="next-btn" id="next-scene2" onclick="goToScene(3)">Next</button>
+</div>
+
+<!-- Scene 3: Garden -->
+<div id="scene3" class="scene-container" style="background-image: url('https://img.freepik.com/premium-photo/backyard-wooden-fence-outdoors-flower-nature_53876-276534.jpg?semt=ais_hybrid&w=740');">
+  <div class="characters">
+    <img src="https://file.aiquickdraw.com/imgcompressed/img/compressed_91aee4586cd6e33d7353b3d0c77485e3.webp" alt="Sister" />
+  </div>
+  <div class="speech">Emma's sister is playing outside. What is she doing?</div>
+  <div class="question">
+    <h3>What is she doing?</h3>
+    <div class="options">
+      <button onclick="handleAnswer(this, false, 'scene3')">She is cooking the flowers.</button>
+      <button onclick="handleAnswer(this, true, 'scene3')">She is watering the flowers.</button>
+      <button onclick="handleAnswer(this, false, 'scene3')">She waters flowers every morning.</button>
+    </div>
+  </div>
+  <div class="question">
+    <h3>Why is she watering the flowers?</h3>
+    <div class="options">
+      <button onclick="handleAnswer(this, true, 'scene3')">Because it's sunny and the plants are thirsty.</button>
+      <button onclick="handleAnswer(this, false, 'scene3')">Because she doesn't like flowers.</button>
+      <button onclick="handleAnswer(this, false, 'scene3')">Because she never plays outside.</button>
+    </div>
+  </div>
+  <button class="next-btn" id="next-scene3" onclick="goToScene(4)">Next</button>
+</div>
+
+<!-- Scene 4: Living Room -->
+<div id="scene4" class="scene-container" style="background-image: url('https://s3.stroi-news.ru/img/gostinaya-fon-vkontakte-2.jpg');">
+  <div class="characters">
+    <img src="https://file.aiquickdraw.com/imgcompressed/img/compressed_10c17fb06ce50833e419c877cef411cb.webp" alt="Dad" />
+  </div>
+  <div class="speech">Emma's dad is relaxing in the living room. What is he doing?</div>
+  <div class="question">
+    <h3>What is he doing?</h3>
+    <div class="options">
+      <button onclick="handleAnswer(this, false, 'scene4')">He is read.</button>
+      <button onclick="handleAnswer(this, false, 'scene4')">He watches TV every day.</button>
+      <button onclick="handleAnswer(this, true, 'scene4')">He is watching TV.</button>
+    </div>
+  </div>
+  <div class="question">
+    <h3>Why is he watching TV?</h3>
+    <div class="options">
+      <button onclick="handleAnswer(this, true, 'scene4')">Because it's his favorite show.</button>
+      <button onclick="handleAnswer(this, false, 'scene4')">Because he is sleeping.</button>
+      <button onclick="handleAnswer(this, false, 'scene4')">Because he is working now.</button>
+    </div>
+  </div>
+  <button class="next-btn" id="next-scene4" onclick="goToScene(5)">Next</button>
+</div>
+
+<!-- Scene 5: Emma's Room -->
+<div id="scene5" class="scene-container" style="background-image: url('https://design.pibig.info/uploads/posts/2023-01/1675175210_design-pibig-info-p-detskaya-komnata-multyashnaya-krasivo-4.jpg');">
+  <!-- Добавленный робот в правом верхнем углу -->
+  <div class="robot-corner">
+    <img src="https://file.aiquickdraw.com/imgcompressed/img/compressed_5cc407d8d0eda2a949eaa4e34e493ba6.webp" alt="Robot" />
+  </div>
+  
+  <div class="characters">
+    <img src="https://file.aiquickdraw.com/imgcompressed/img/compressed_3f2a9b8c7d6e5f4a3c2b1e0d9f8a7b6c.webp" alt="Robot" />
+  </div>
+  <div class="speech">Emma is in her room. What is happening now?</div>
+  <div class="question">
+    <h3>What is the robot doing?</h3>
+    <div class="options">
+      <button onclick="handleAnswer(this, false, 'scene5')">It dances every day.</button>
+      <button onclick="handleAnswer(this, true, 'scene5')">It is dancing for Emma.</button>
+      <button onclick="handleAnswer(this, false, 'scene5')">It is sleeping.</button>
+    </div>
+  </div>
+  <div class="question">
+    <h3>Why is the robot dancing?</h3>
+    <div class="options">
+      <button onclick="handleAnswer(this, true, 'scene5')">Because it loves dancing.</button>
+      <button onclick="handleAnswer(this, false, 'scene5')">Because it is tired.</button>
+      <button onclick="handleAnswer(this, false, 'scene5')">Because it is broken.</button>
+    </div>
+  </div>
+  <button class="next-btn" id="next-scene5" onclick="goToScene(6)">Next</button>
+</div>
+
+<!-- Final Scene: Attic Reunion -->
+<div id="scene6" class="scene-container" style="background-image: url('https://img.freepik.com/free-vector/cellar-interior-storage-clothing-inside-basement-cartoon-style_33099-685.jpg?semt=ais_hybrid&w=740');">
+  <div class="speech">
+    <h2>Mission Accomplished!</h2>
+    <p>Emma found all her pets in the attic!</p>
+    <p>Your final score: <span id="final-score">0</span></p>
+    <p id="score-message"></p>
+  </div>
+  <div class="characters" style="position: static; display: flex; justify-content: center; gap: 20px; margin-top: 20px;">
+    <img src="https://file.aiquickdraw.com/imgcompressed/img/compressed_6aca0e5a91701d435210fe80d21102f0.webp" alt="Cat" style="width: 150px;">
+    <img src="https://file.aiquickdraw.com/imgcompressed/img/compressed_41d38ac371c7242991bec988247f6c48.webp" alt="Dog" style="width: 150px;">
+    <img src="https://file.aiquickdraw.com/imgcompressed/img/compressed_f19577fdff4f33af32f2cd91dddd66eb.webp" alt="Parrot" style="width: 150px;">
+  </div>
+  <button class="start-btn" onclick="goToScene(0)">START AGAIN</button>
+</div>
+
+<script>
+let score = 0;
+let answeredQuestions = {
+  scene1: 0,
+  scene2: 0,
+  scene3: 0,
+  scene4: 0,
+  scene5: 0,
+};
+
+function handleAnswer(button, isCorrect, sceneId) {
+  if (button.classList.contains('correct')) return; // Prevent re-clicking correct answer
+  const questionContainer = button.closest('.question');
+  const buttons = questionContainer.querySelectorAll('.options button');
+  
+  if (isCorrect) {
+    buttons.forEach(btn => {
+      btn.disabled = true;
+      btn.style.cursor = 'not-allowed';
+    });
+    button.classList.add('correct');
+    score += 10;
+    answeredQuestions[sceneId]++;
+  } else {
+    button.classList.add('incorrect');
+    score -= 5;
+    setTimeout(() => {
+      button.classList.remove('incorrect'); // Allow retry after brief delay
+    }, 1000);
+  }
+  
+  document.getElementById('score').textContent = score;
+  try {
+    if (isCorrect) {
+      document.getElementById('correct-sound').play();
+    } else {
+      document.getElementById('incorrect-sound').play();
+    }
+  } catch (e) {
+    console.log('Sound playback error: ', e);
+  }
+  
+  if (answeredQuestions[sceneId] === 2) {
+    const nextBtn = document.getElementById('next-' + sceneId);
+    if (nextBtn) nextBtn.style.display = 'inline-block';
+  }
+}
+
+function goToScene(number) {
+  const current = document.querySelector('.scene-container.active');
+  if (current) current.classList.remove('active');
+  const next = document.getElementById('scene' + number);
+  if (next) next.classList.add('active');
+  document.getElementById('current-scene').textContent = number > 0 && number < 6 ? number : 0;
+  if (number === 0) {
+    score = 0;
+    document.getElementById('score').textContent = score;
+    answeredQuestions = { scene1: 0, scene2: 0, scene3: 0, scene4: 0, scene5: 0 };
+    document.querySelectorAll('.options button').forEach(btn => {
+      btn.classList.remove('correct', 'incorrect');
+      btn.disabled = false;
+      btn.style.cursor = 'pointer';
+    });
+    document.querySelectorAll('.next-btn').forEach(btn => btn.style.display = 'none');
+  }
+  if (number === 6) {
+    document.getElementById('final-score').textContent = score;
+    const scoreMessage = document.getElementById('score-message');
+    if (score >= 50) {
+      scoreMessage.textContent = "Amazing! You're a grammar superstar!";
+    } else if (score >= 30) {
+      scoreMessage.textContent = "Great job! You helped Emma save her pets!";
+    } else {
+      scoreMessage.textContent = "Nice try! Play again to improve your score!";
+    }
+  }
+}
+</script>
+
+</body>
+</html>
